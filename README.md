@@ -1,2 +1,2 @@
 # wechat-weather-bot
-for nNiii
+Only for nNiii
