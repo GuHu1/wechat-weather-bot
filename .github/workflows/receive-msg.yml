@@ -9,11 +9,15 @@ on:
         description: '用户OpenID'
         required: true
 
+permissions: write-all  # 添加这行！
+
 jobs:
   save-message:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # 同时添加这行
       
       - name: 保存消息
         run: |
