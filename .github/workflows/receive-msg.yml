@@ -1,0 +1,25 @@
+name: 接收微信消息
+on:
+  workflow_dispatch:
+    inputs:
+      content:
+        description: '用户发送的文字'
+        required: true
+      from_user:
+        description: '用户OpenID'
+        required: true
+
+jobs:
+  save-message:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 保存消息
+        run: |
+          echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${{ github.event.inputs.from_user }}: ${{ github.event.inputs.content }}" >> messages.txt
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add messages.txt
+          git commit -m "新消息" || echo "无新内容"
+          git push
