@@ -1,0 +1,21 @@
+name: 每日天气推送
+on:
+  schedule:
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+jobs:
+  push-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm install
+      - run: npm start
+        env:
+          APPID: ${{ secrets.APPID }}
+          APPSECRET: ${{ secrets.APPSECRET }}
+          TEMPLATE_ID: ${{ secrets.TEMPLATE_ID }}
+          USER_CONFIG: ${{ secrets.USER_CONFIG }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
