@@ -132,7 +132,7 @@ async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, ci
   
   // 使用提取后的简短预警信息
   const warningText = warnings.length > 0 
-    ? warnings.map((w, i) => `${i + 1}. ${extractWarningKeyword(w.title)}`).join('\n') 
+    ? warnings.map((w) => extractWarningKeyword(w.title)).join('  ') 
     : '暂无预警信息';
   
   const currentDate = new Date().toLocaleDateString('zh-CN', { 
