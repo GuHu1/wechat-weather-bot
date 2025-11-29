@@ -5,6 +5,29 @@ const axios = require('axios');
 const app = express();
 const TOKEN = 'weixin123';
 const GITHUB_REPO = 'GuHu1/wechat-weather-bot';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+// 缓存 AccessToken（避免每次请求都重新获取）
+let cachedToken = null;
+let tokenExpireTime = 0;
+
+// 获取微信 AccessToken
+async function getAccessToken() {
+  const now = Date.now();
+  if (cachedToken && now < tokenExpireTime) {
+    return cachedToken;
+  }
+  
+  const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${process.env.APPID}&secret=${process.env.APPSECRET}`;
+  const res = await axios.get(url);
+  
+  if (res.data.access_token) {
+    cachedToken = res.data.access_token;
+    tokenExpireTime = now + (res.data.expires_in - 300) * 1000; // 提前5分钟过期
+    return cachedToken;
+  }
+  throw new Error('获取Token失败');
+}
 
 app.use(express.raw({ type: 'text/xml' }));
 
@@ -16,12 +39,11 @@ app.get('/wechat', (req, res) => {
   sha1 === signature ? res.send(echostr) : res.status(403).send('签名错误');
 });
 
-// POST: 接收消息（增强版）
+// POST: 接收消息
 app.post('/wechat', async (req, res) => {
   try {
     const xmlData = req.body.toString();
     
-    // 提取所有信息
     const msgType = xmlData.match(/<MsgType><!\[CDATA\[(.*?)\]\]><\/MsgType>/)?.[1] || 'text';
     const fromUser = xmlData.match(/<FromUserName><!\[CDATA\[(.*?)\]\]><\/FromUserName>/)?.[1] || '';
     const createTime = xmlData.match(/<CreateTime>(\d+)<\/CreateTime>/)?.[1] || '';
@@ -29,17 +51,35 @@ app.post('/wechat', async (req, res) => {
     let content = '';
     let mediaId = '';
     
-    // 根据消息类型提取内容
-    if (msgType === 'text') {
-      // 保留表情，不过滤
-      content = xmlData.match(/<Content><!\[CDATA\[(.*?)\]\]><\/Content>/)?.[1] || '';
-    } else if (msgType === 'image') {
-      mediaId = xmlData.match(/<MediaId><!\[CDATA\[(.*?)\]\]><\/MediaId>/)?.[1] || '';
-      content = `[图片]`;
-    } else if (msgType === 'emoji') {
-      content = xmlData.match(/<Emoji><!\[CDATA\[(.*?)\]\]><\/Emoji>/)?.[1] || '[表情]';
-    } else {
-      content = `[${msgType}消息]`;
+    // 根据消息类型处理
+    switch (msgType) {
+      case 'text':
+        // 保留原始内容（包括表情）
+        content = xmlData.match(/<Content><!\[CDATA\[(.*?)\]\]><\/Content>/)?.[1] || '';
+        break;
+        
+      case 'image':
+        mediaId = xmlData.match(/<MediaId><!\[CDATA\[(.*?)\]\]><\/MediaId>/)?.[1] || '';
+        content = `[图片]`;
+        break;
+        
+      case 'emoji':
+        // 微信自定义表情
+        content = xmlData.match(/<Emoji><!\[CDATA\[(.*?)\]\]><\/Emoji>/)?.[1] || '[表情]';
+        break;
+        
+      case 'voice':
+        mediaId = xmlData.match(/<MediaId><!\[CDATA\[(.*?)\]\]><\/MediaId>/)?.[1] || '';
+        content = `[语音]`;
+        break;
+        
+      case 'video':
+        mediaId = xmlData.match(/<MediaId><!\[CDATA\[(.*?)\]\]><\/MediaId>/)?.[1] || '';
+        content = `[视频]`;
+        break;
+        
+      default:
+        content = `[${msgType}消息]`;
     }
 
     // 构建结构化数据
@@ -48,7 +88,7 @@ app.post('/wechat', async (req, res) => {
       openid: fromUser,
       type: msgType,
       content: content,
-      mediaId: mediaId  // 图片/语音的MediaId
+      mediaId: mediaId
     };
 
     // 触发 GitHub Actions
@@ -57,13 +97,12 @@ app.post('/wechat', async (req, res) => {
       {
         ref: 'main',
         inputs: {
-          message_json: JSON.stringify(messageData),
-          raw_xml: xmlData  // 调试用
+          message_json: JSON.stringify(messageData)
         }
       },
       {
         headers: {
-          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Authorization': `token ${GITHUB_TOKEN}`,
           'Accept': 'application/vnd.github.v3+json'
         }
       }
@@ -73,6 +112,21 @@ app.post('/wechat', async (req, res) => {
   } catch (error) {
     console.error('处理失败:', error.message);
     res.send('success');
+  }
+});
+
+// GET: 下载媒体文件（关键：提供查看图片的接口）
+app.get('/download/:mediaId', async (req, res) => {
+  try {
+    const mediaId = req.params.mediaId;
+    const token = await getAccessToken();
+    
+    // 重定向到微信媒体下载接口
+    const downloadUrl = `https://api.weixin.qq.com/cgi-bin/media/get?access_token=${token}&media_id=${mediaId}`;
+    res.redirect(downloadUrl);
+  } catch (error) {
+    console.error('下载失败:', error.message);
+    res.status(500).send('下载失败');
   }
 });
 
