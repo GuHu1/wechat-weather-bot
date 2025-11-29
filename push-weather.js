@@ -88,25 +88,54 @@ function generateTip(warnings) {
 async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, cityName, warnings) {
   const url = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${token}`;
   
-  // 确保使用北京时间
+  // 提取预警关键词（核心修改）
+  function extractWarningKeyword(title) {
+    const keywordMap = {
+      '大风': '大风预警',
+      '雾': '雾霾预警',
+      '霾': '雾霾预警',
+      '暴雨': '暴雨预警',
+      '大雨': '大雨预警',
+      '雪': '降雪预警',
+      '寒潮': '寒潮预警',
+      '低温': '低温预警',
+      '高温': '高温预警',
+      '道路结冰': '道路结冰预警',
+      '霜冻': '霜冻预警',
+      '雷电': '雷电预警',
+      '冰雹': '冰雹预警'
+    };
+    
+    // 遍历关键词，匹配则返回简短版本
+    for (const [key, value] of Object.entries(keywordMap)) {
+      if (title.includes(key)) {
+        return value;
+      }
+    }
+    
+    // 未匹配到则返回前8字+省略号
+    return title.length > 8 ? title.substring(0, 8) + '...' : title;
+  }
+  
+  // 使用提取后的简短预警信息
+  const warningText = warnings.length > 0 
+    ? warnings.map((w, i) => `${i + 1}. ${extractWarningKeyword(w.title)}`).join('\n') 
+    : '暂无预警信息';
+  
   const currentDate = new Date().toLocaleDateString('zh-CN', { 
     timeZone: 'Asia/Shanghai' 
   });
-  
-  const warningText = warnings.length > 0 
-    ? warnings.map((w, i) => `${i + 1}. ${w.title}`).join('\n') 
-    : '暂无预警';
   
   const data = {
     touser: userId,
     template_id: process.env.TEMPLATE_ID,
     data: {
-      date: { value: currentDate },  // 现在确保是北京时间
+      date: { value: currentDate },
       city: { value: cityName },
       weather: { value: weather.weather },
       temperature: { value: `${weather.temperature}°C` },
       wind: { value: weather.wind },
-      warning: { value: warningText },
+      warning: { value: warningText },  // 现在这里是简短版本
       message: { value: dailyMessage },
       tip: { value: tip }
     }
