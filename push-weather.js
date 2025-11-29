@@ -75,7 +75,14 @@ function generateTip(warnings) {
   if (uniqueTips.length > 0) {
     return uniqueTips.slice(0, 2).join('\n');
   }
-  return '记得带伞，注意保暖！';
+  
+  // 根据月份返回默认提示
+  const month = new Date().getMonth() + 1; // getMonth()返回0-11，需要+1
+  if (month >= 5 && month <= 8) {
+    return '☀️ 小心紫外线，做好防晒';
+  } else {
+    return '🧣 做好保暖';
+  }
 }
 
 async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, cityName, warnings) {
