@@ -80,14 +80,21 @@ function generateTip(warnings) {
 
 async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, cityName, warnings) {
   const url = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${token}`;
+  
+  // 确保使用北京时间
+  const currentDate = new Date().toLocaleDateString('zh-CN', { 
+    timeZone: 'Asia/Shanghai' 
+  });
+  
   const warningText = warnings.length > 0 
     ? warnings.map((w, i) => `${i + 1}. ${w.title}`).join('\n') 
     : '暂无预警';
+  
   const data = {
     touser: userId,
     template_id: process.env.TEMPLATE_ID,
     data: {
-      date: { value: new Date().toLocaleDateString('zh-CN') },
+      date: { value: currentDate },  // 现在确保是北京时间
       city: { value: cityName },
       weather: { value: weather.weather },
       temperature: { value: `${weather.temperature}°C` },
@@ -97,6 +104,7 @@ async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, ci
       tip: { value: tip }
     }
   };
+  
   const res = await axios.post(url, data);
   if (res.data.errcode !== 0) {
     throw new Error(`推送失败: ${JSON.stringify(res.data)}`);
