@@ -2,14 +2,14 @@ name: 接收微信消息
 on:
   workflow_dispatch:
     inputs:
-      content:
-        description: '用户发送的文字'
+      message_json:
+        description: '消息JSON数据'
         required: true
-      from_user:
-        description: '用户OpenID'
-        required: true
+      raw_xml:
+        description: '原始XML数据'
+        required: false
 
-permissions: write-all  # 添加这行！
+permissions: write-all
 
 jobs:
   save-message:
@@ -17,13 +17,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # 同时添加这行
+          token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: 保存消息
+      - name: 安装 jq 工具
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: 解析并保存消息
         run: |
-          echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${{ github.event.inputs.from_user }}: ${{ github.event.inputs.content }}" >> messages.txt
+          # 解析JSON
+          MESSAGE='${{ github.event.inputs.message_json }}'
+          
+          # 提取字段
+          TIMESTAMP=$(echo $MESSAGE | jq -r '.timestamp')
+          OPENID=$(echo $MESSAGE | jq -r '.openid')
+          TYPE=$(echo $MESSAGE | jq -r '.type')
+          CONTENT=$(echo $MESSAGE | jq -r '.content')
+          MEDIAID=$(echo $MESSAGE | jq -r '.mediaId')
+          
+          # 转换为北京时间
+          BEIJING_TIME=$(date -d "@$TIMESTAMP" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')
+          
+          # 创建日期文件夹
+          DATE_FOLDER=$(date -d "@$TIMESTAMP" '+%Y-%m-%d' 2>/dev/null || date '+%Y-%m-%d')
+          mkdir -p "messages/$DATE_FOLDER"
+          
+          # 保存可读文本（messages/2025-11-30/messages.txt）
+          echo "[$BEIJING_TIME] [$TYPE] $OPENID: $CONTENT" >> "messages/$DATE_FOLDER/messages.txt"
+          
+          # 如果媒体ID存在，单独保存（messages/2025-11-30/media.txt）
+          if [ "$MEDIAID" != "null" ] && [ -n "$MEDIAID" ]; then
+            echo "[$BEIJING_TIME] $OPENID [$TYPE] MediaId: $MEDIAID" >> "messages/$DATE_FOLDER/media.txt"
+          fi
+          
+          # 保存完整的JSON（messages/2025-11-30/data.json）
+          echo $MESSAGE >> "messages/$DATE_FOLDER/data.json"
+          
+          # 提交到仓库
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add messages.txt
-          git commit -m "新消息" || echo "无新内容"
+          git add messages/
+          git commit -m "添加新消息 (类型: $TYPE)" || echo "无新内容"
           git push
