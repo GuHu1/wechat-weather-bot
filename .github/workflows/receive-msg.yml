@@ -5,9 +5,6 @@ on:
       message_json:
         description: '消息JSON数据'
         required: true
-      raw_xml:
-        description: '原始XML数据'
-        required: false
 
 permissions: write-all
 
@@ -41,16 +38,14 @@ jobs:
           DATE_FOLDER=$(date -d "@$TIMESTAMP" '+%Y-%m-%d' 2>/dev/null || date '+%Y-%m-%d')
           mkdir -p "messages/$DATE_FOLDER"
           
-          # 保存可读文本（messages/2025-11-30/messages.txt）
+          # 保存可读日志（所有消息）
           echo "[$BEIJING_TIME] [$TYPE] $OPENID: $CONTENT" >> "messages/$DATE_FOLDER/messages.txt"
           
-          # 如果媒体ID存在，单独保存（messages/2025-11-30/media.txt）
+          # 如果是媒体消息，添加下载链接
           if [ "$MEDIAID" != "null" ] && [ -n "$MEDIAID" ]; then
-            echo "[$BEIJING_TIME] $OPENID [$TYPE] MediaId: $MEDIAID" >> "messages/$DATE_FOLDER/media.txt"
+            DOWNLOAD_URL="https://yourapp.onrender.com/download/${MEDIAID}"
+            echo "[$BEIJING_TIME] [$TYPE] $OPENID: [下载链接] $DOWNLOAD_URL" >> "messages/$DATE_FOLDER/media.txt"
           fi
-          
-          # 保存完整的JSON（messages/2025-11-30/data.json）
-          echo $MESSAGE >> "messages/$DATE_FOLDER/data.json"
           
           # 提交到仓库
           git config --local user.email "action@github.com"
