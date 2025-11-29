@@ -56,19 +56,19 @@ function generateTip(warnings, temperature) {
     const title = warning.title || '';
     const lowerTitle = title.toLowerCase();
     if (lowerTitle.includes('雪') || lowerTitle.includes('道路结冰')) {
-      tips.push('  ❄️ 降雪预警：小心路滑，注意交通安全');
+      tips.push('降雪预警：小心路滑，注意交通安全');
     } else if (lowerTitle.includes('暴雨') || lowerTitle.includes('大雨')) {
-      tips.push('  ☔ 暴雨预警：记得带伞，避免外出');
+      tips.push('暴雨预警：记得带伞，避免外出');
     } else if (lowerTitle.includes('寒潮') || lowerTitle.includes('低温')) {
-      tips.push('  ❄️ 寒潮预警：记得穿羽绒服，注意保暖');
+      tips.push('寒潮预警：记得穿羽绒服，注意保暖');
     } else if (lowerTitle.includes('大风')) {
-      tips.push('  💨 大风预警：注意多穿衣服，避免高空坠物');
+      tips.push('大风预警：注意多穿衣服，避免高空坠物');
     } else if (lowerTitle.includes('雾') || lowerTitle.includes('霾')) {
-      tips.push('  🌫️ 雾霾预警：建议戴口罩，减少户外运动');
+      tips.push('雾霾预警：建议戴口罩，减少户外运动');
     } else if (lowerTitle.includes('高温')) {
-      tips.push('  🔥 高温预警：注意防暑降温，多补水');
+      tips.push('高温预警：注意防暑降温，多补水');
     } else if (lowerTitle.includes('雨')) {
-      tips.push('  🌦️ 降雨提示：记得带伞');
+      tips.push('降雨提示：记得带伞');
     }
   }
   const uniqueTips = [...new Set(tips)];
@@ -79,11 +79,11 @@ function generateTip(warnings, temperature) {
   // 基于温度的默认提示
   const temp = parseInt(temperature);
   if (temp > 30) {
-    return '  ☀️ 小心紫外线，做好防晒';
+    return '小心紫外线，做好防晒';
   } else if (temp < 10) {
-    return '  🧣 做好保暖';
+    return '做好保暖';
   } else {
-    return '  🌸 温度很舒适，享受美好的今天';
+    return '温度很舒适，享受美好的今天';
   }
 }
 
