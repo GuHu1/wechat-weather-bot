@@ -1,2 +1,3 @@
 [2025-11-29 16:44:51] [text] oHyqu2MKpIzBHn1pOxiuvzJmi0ek: 你好
 [2025-11-29 16:48:59] [text] oHyqu2MKpIzBHn1pOxiuvzJmi0ek: /::$
+[2025-11-29 16:49:40] [text] oHyqu2MKpIzBHn1pOxiuvzJmi0ek: [收到不支持的消息类型，暂无法显示]
