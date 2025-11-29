@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       message_json:
-        description: '消息JSON数据（包含时间戳、OpenID、类型、内容、媒体ID）'
+        description: '消息JSON数据'
         required: true
 
 permissions: write-all
@@ -21,10 +21,10 @@ jobs:
       
       - name: 解析并保存消息
         run: |
-          # 解析JSON数据
+          # 解析JSON
           MESSAGE='${{ github.event.inputs.message_json }}'
           
-          # 提取各字段
+          # 提取字段
           TIMESTAMP=$(echo $MESSAGE | jq -r '.timestamp')
           OPENID=$(echo $MESSAGE | jq -r '.openid')
           TYPE=$(echo $MESSAGE | jq -r '.type')
@@ -36,23 +36,28 @@ jobs:
             ["oHyqu2MKpIzBHn1pOxiuvzJmi0ek"]="GuHui"
             ["oHyqu2EJPTCZIFHyooewIfjnp5Jw"]="nNiii"
           )
-          NICKNAME="${USER_MAP[$OPENID]:-$OPENID}"  # 有映射显示昵称，否则显示原始ID
+          NICKNAME="${USER_MAP[$OPENID]:-$OPENID}"
           
           # 转换为北京时间
           BEIJING_TIME=$(date -d "@$TIMESTAMP" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')
           
-          # 创建日期文件夹（按天分类）
+          # 创建日期文件夹
           DATE_FOLDER=$(date -d "@$TIMESTAMP" '+%Y-%m-%d' 2>/dev/null || date '+%Y-%m-%d')
           mkdir -p "messages/$DATE_FOLDER"
           
           # 保存可读日志（使用昵称）
           echo "[$BEIJING_TIME] [$TYPE] $NICKNAME: $CONTENT" >> "messages/$DATE_FOLDER/messages.txt"
           
-          # 如果是媒体消息，添加下载链接
+          # 如果是媒体消息，添加下载链接（修复空格问题）
           if [ "$MEDIAID" != "null" ] && [ -n "$MEDIAID" ]; then
+            # 使用你的真实Render域名，移除所有空格
             DOWNLOAD_URL="https://wechat-weather-bot.onrender.com/download/${MEDIAID}"
             echo "[$BEIJING_TIME] [$TYPE] $NICKNAME: [下载链接] $DOWNLOAD_URL" >> "messages/$DATE_FOLDER/media.txt"
+            echo "生成的下载链接: $DOWNLOAD_URL"  # 调试用
           fi
+          
+          # 保存完整JSON
+          echo $MESSAGE >> "messages/$DATE_FOLDER/data.json"
           
           # 提交到仓库
           git config --local user.email "action@github.com"
