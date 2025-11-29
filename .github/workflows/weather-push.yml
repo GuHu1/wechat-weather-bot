@@ -1,19 +1,30 @@
 name: 每日天气推送
 on:
   schedule:
-    # 北京时间每天 6:30 AM = UTC 时间 22:30
+    # 北京时间每天 6:30 = UTC 22:30（前一天）
     - cron: '30 22 * * *'
   workflow_dispatch:
+
 jobs:
   push-weather:
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v4
+      
+      - name: 设置北京时间
+        run: |
+          sudo timedatectl set-timezone Asia/Shanghai
+          echo "当前时间: $(date '+%Y-%m-%d %H:%M:%S')"
+      
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+      
       - run: npm install
-      - run: npm start
+      
+      - name: 执行推送（使用北京时间）
+        run: TZ='Asia/Shanghai' npm start  # 关键：设置时区环境变量
         env:
           APPID: ${{ secrets.APPID }}
           APPSECRET: ${{ secrets.APPSECRET }}
