@@ -54,3 +54,9 @@ jobs:
             echo "[$BEIJING_TIME] [$TYPE] $NICKNAME: [下载链接] $DOWNLOAD_URL" >> "messages/$DATE_FOLDER/media.txt"
           fi
           
+          # 提交到仓库
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add messages/
+          git commit -m "添加新消息 (用户: $NICKNAME, 类型: $TYPE)" || echo "无新内容"
+          git push
