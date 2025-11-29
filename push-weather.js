@@ -83,7 +83,7 @@ function generateTip(warnings, temperature) {
   } else if (temp < 10) {
     return '做好保暖';
   } else {
-    return '温度很舒适，享受美好的今天';
+    return '温度很舒适，享受美好的一天';
   }
 }
 
