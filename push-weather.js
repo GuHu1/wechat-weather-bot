@@ -114,9 +114,7 @@ async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, ci
         return value;
       }
     }
-    
-    // 未匹配到则返回前8字+省略号
-    return title.length > 8 ? title.substring(0, 8) + '...' : title;
+
   }
   
   // 使用提取后的简短预警信息
