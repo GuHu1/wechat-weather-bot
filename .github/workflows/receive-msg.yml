@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       message_json:
-        description: '消息JSON数据'
+        description: '消息JSON数据（包含时间戳、OpenID、类型、内容、媒体ID）'
         required: true
 
 permissions: write-all
@@ -21,35 +21,36 @@ jobs:
       
       - name: 解析并保存消息
         run: |
-          # 解析JSON
+          # 解析JSON数据
           MESSAGE='${{ github.event.inputs.message_json }}'
           
-          # 提取字段
+          # 提取各字段
           TIMESTAMP=$(echo $MESSAGE | jq -r '.timestamp')
           OPENID=$(echo $MESSAGE | jq -r '.openid')
           TYPE=$(echo $MESSAGE | jq -r '.type')
           CONTENT=$(echo $MESSAGE | jq -r '.content')
           MEDIAID=$(echo $MESSAGE | jq -r '.mediaId')
           
+          # OpenID 到昵称的映射
+          declare -A USER_MAP=(
+            ["oHyqu2MKpIzBHn1pOxiuvzJmi0ek"]="GuHui"
+            ["oHyqu2EJPTCZIFHyooewIfjnp5Jw"]="nNiii"
+          )
+          NICKNAME="${USER_MAP[$OPENID]:-$OPENID}"  # 有映射显示昵称，否则显示原始ID
+          
           # 转换为北京时间
           BEIJING_TIME=$(date -d "@$TIMESTAMP" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date '+%Y-%m-%d %H:%M:%S')
           
-          # 创建日期文件夹
+          # 创建日期文件夹（按天分类）
           DATE_FOLDER=$(date -d "@$TIMESTAMP" '+%Y-%m-%d' 2>/dev/null || date '+%Y-%m-%d')
           mkdir -p "messages/$DATE_FOLDER"
           
-          # 保存可读日志（所有消息）
-          echo "[$BEIJING_TIME] [$TYPE] $OPENID: $CONTENT" >> "messages/$DATE_FOLDER/messages.txt"
+          # 保存可读日志（使用昵称）
+          echo "[$BEIJING_TIME] [$TYPE] $NICKNAME: $CONTENT" >> "messages/$DATE_FOLDER/messages.txt"
           
           # 如果是媒体消息，添加下载链接
           if [ "$MEDIAID" != "null" ] && [ -n "$MEDIAID" ]; then
-            DOWNLOAD_URL="https://yourapp.onrender.com/download/${MEDIAID}"
-            echo "[$BEIJING_TIME] [$TYPE] $OPENID: [下载链接] $DOWNLOAD_URL" >> "messages/$DATE_FOLDER/media.txt"
+            DOWNLOAD_URL="https://wechat-weather-bot.onrender.com/download/${MEDIAID}"
+            echo "[$BEIJING_TIME] [$TYPE] $NICKNAME: [下载链接] $DOWNLOAD_URL" >> "messages/$DATE_FOLDER/media.txt"
           fi
           
-          # 提交到仓库
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add messages/
-          git commit -m "添加新消息 (类型: $TYPE)" || echo "无新内容"
-          git push
