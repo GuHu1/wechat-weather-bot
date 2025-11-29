@@ -50,13 +50,13 @@ async function getDailyMessage() {
   return `今天是我们重新相识的第${diffDays}天`;
 }
 
-function generateTip(warnings) {
+function generateTip(warnings, temperature) {
   const tips = [];
   for (const warning of warnings) {
     const title = warning.title || '';
     const lowerTitle = title.toLowerCase();
     if (lowerTitle.includes('雪') || lowerTitle.includes('道路结冰')) {
-      tips.push('🌨️ 降雪预警：小心路滑，注意交通安全');
+      tips.push('❄️ 降雪预警：小心路滑，注意交通安全');
     } else if (lowerTitle.includes('暴雨') || lowerTitle.includes('大雨')) {
       tips.push('☔ 暴雨预警：记得带伞，避免外出');
     } else if (lowerTitle.includes('寒潮') || lowerTitle.includes('低温')) {
@@ -76,12 +76,14 @@ function generateTip(warnings) {
     return uniqueTips.slice(0, 2).join('\n');
   }
   
-  // 根据月份返回默认提示
-  const month = new Date().getMonth() + 1; // getMonth()返回0-11，需要+1
-  if (month >= 5 && month <= 8) {
+  // 基于温度的默认提示
+  const temp = parseInt(temperature);
+  if (temp > 30) {
     return '☀️ 小心紫外线，做好防晒';
-  } else {
+  } else if (temp < 10) {
     return '🧣 做好保暖';
+  } else {
+    return '🌸 温度很舒适，享受美好的今天';
   }
 }
 
@@ -173,7 +175,7 @@ async function main() {
           getWeather(userConfig.cityId),
           getWarnings(userConfig.cityId)
         ]);
-        const tip = generateTip(warnings);
+        const tip = generateTip(warnings, weather.temperature);
         console.log(`  天气: ${weather.weather} ${weather.temperature}°C`);
         console.log(`  预警: ${warnings.length} 条`);
         await sendTemplateMessage(token, userConfig.openid, weather, dailyMessage, tip, userConfig.cityName, warnings);
