@@ -49,7 +49,6 @@ async function getDailyMessage() {
     }).split('/').join('-'); // 转换为 YYYY-MM-DD 格式
   }
 
-  // 计算两个日期之间的天数差（基于北京时间）
   function getDaysDiffBeijing(startDateStr, endDateStr) {
     const start = new Date(startDateStr + 'T00:00:00+08:00');
     const end = new Date(endDateStr + 'T00:00:00+08:00');
