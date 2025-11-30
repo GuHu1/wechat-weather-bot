@@ -50,7 +50,7 @@ async function getDailyMessage() {
   }
 
   // 计算两个日期之间的天数差（基于北京时间）
-  function getDaysDiff Beijing(startDateStr, endDateStr) {
+  function getDaysDiffBeijing(startDateStr, endDateStr) {
     const start = new Date(startDateStr + 'T00:00:00+08:00');
     const end = new Date(endDateStr + 'T00:00:00+08:00');
     const diffTime = end - start;
