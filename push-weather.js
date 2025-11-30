@@ -38,14 +38,28 @@ async function getWarnings(cityId) {
   }
 }
 
-// 修改后的函数
 async function getDailyMessage() {
-  const startDate = new Date('2025-09-25'); // 设置开始日期
-  const today = new Date();
-  
-  // 计算天数差（毫秒转天数）
-  const diffTime = today - startDate;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 因为开始当天是第1天
+  // 获取北京时间的日期字符串（格式：YYYY-MM-DD）
+  function getBeijingDateString(date) {
+    return date.toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).split('/').join('-'); // 转换为 YYYY-MM-DD 格式
+  }
+
+  // 计算两个日期之间的天数差（基于北京时间）
+  function getDaysDiff Beijing(startDateStr, endDateStr) {
+    const start = new Date(startDateStr + 'T00:00:00+08:00');
+    const end = new Date(endDateStr + 'T00:00:00+08:00');
+    const diffTime = end - start;
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  const startDateStr = '2025-09-25';
+  const todayStr = getBeijingDateString(new Date());
+  const diffDays = getDaysDiffBeijing(startDateStr, todayStr);
   
   return `今天是我们重新相识的第${diffDays}天`;
 }
@@ -90,7 +104,7 @@ function generateTip(warnings, temperature) {
 async function sendTemplateMessage(token, userId, weather, dailyMessage, tip, cityName, warnings) {
   const url = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${token}`;
   
-  // 提取预警关键词（核心修改）
+  // 提取预警关键词
   function extractWarningKeyword(title) {
     const keywordMap = {
     '台风': '台风预警',
