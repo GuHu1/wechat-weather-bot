@@ -56,7 +56,7 @@ async function getDailyMessage() {
     return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   }
 
-  const startDateStr = '2025-09-25';
+  const startDateStr = '2026-01-01';
   const todayStr = getBeijingDateString(new Date());
   const diffDays = getDaysDiffBeijing(startDateStr, todayStr);
   
