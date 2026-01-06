@@ -60,7 +60,7 @@ async function getDailyMessage() {
   const todayStr = getBeijingDateString(new Date());
   const diffDays = getDaysDiffBeijing(startDateStr, todayStr);
   
-  return `今天是我们在一起的第${diffDays}天`;
+  return `今天是我们恋爱的第${diffDays}天`;
 }
 
 function generateTip(warnings, temperature) {
