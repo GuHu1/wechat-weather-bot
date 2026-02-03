@@ -9,6 +9,12 @@ jobs:
   push-weather:
     runs-on: ubuntu-latest
     
+    strategy:
+      fail-fast: false
+    timeout-minutes: 10
+    # 最多重试 3 次（含首次）
+    continue-on-error: false
+    
     steps:
       - uses: actions/checkout@v4
       
@@ -24,7 +30,12 @@ jobs:
       - run: npm install
       
       - name: 执行推送（使用北京时间）
-        run: TZ='Asia/Shanghai' npm start  # 关键：设置时区环境变量
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 8
+          max_attempts: 3
+          retry_wait_seconds: 5
+          command: TZ='Asia/Shanghai' npm start
         env:
           APPID: ${{ secrets.APPID }}
           APPSECRET: ${{ secrets.APPSECRET }}
